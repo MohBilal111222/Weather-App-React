@@ -1,33 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import axios from "axios"
+import { useEffect, useRef, useState } from "react"
+import './index.css'
+
 
 function App() {
-  const [count, setCount] = useState(0)
 
+  const [weather,setweather] = useState([])
+  const [city, setCity] = useState('')
+  const [error,setError] = useState('')
+  const inputVal = useRef()
+
+  useEffect(()=>{
+    const fetchData = async ()=>{
+      if(city.trim()){
+        try {
+          const res = await axios(`https://api.weatherapi.com/v1/current.json?key=b90421cd7596432bbb2144327241406&q=${city}&aqi=no`)
+
+         if(res.data && res.data.location){
+          console.log(res.data);
+
+          if(!weather.some(item=> item.location.name === res.data.location.name)){
+
+            setweather(prevData =>[...prevData , res.data])
+            
+          }
+          setError('')
+         }else{
+           setError('This city doesnot exist in World')
+         }
+        } catch (error) {
+          console.log(error);
+          setError('This city doesnot exist in World')
+          alert('This city doesnot exist in World')
+        }
+       }
+    };
+    fetchData()
+  },[city,weather])
+
+  function searchVal(){
+    const cityName = inputVal.current.value.trim();
+    if(!cityName){
+      setError('Please enter city name')
+      return;
+    }
+    setCity(cityName)
+    inputVal.current.value = ""
+  }
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+    <div >
+    <h1 className="center">Weather App  </h1>
+    <div className="inp-btn">
+    <input className="input" required type="text" placeholder="search here..." ref={inputVal} />
+    <button className="btn" onClick={searchVal}>search</button>
+    </div>
+    {error && <p style={{ color: 'red' }}>{error}</p>}
+    {
+      weather.length > 0 && (
+        <div className="maindiv">
+           {
+            weather.map((items,index)=>{
+               return <div key={index}>
+                <h1>{items.current.temp_c}°C</h1>
+                <img width="120px" src={items.current.condition.icon} alt='weatherImg' />
+                  <h2>{items.location.name}</h2>
+                  <p>Humidity: {items.current.humidity}%</p>
+                  <hr />
+                </div> 
+            })
+           }
+        </div>
+      )
+       
+    }
+    </div>
     </>
   )
 }
